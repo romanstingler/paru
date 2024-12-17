@@ -544,6 +544,10 @@ pub struct Config {
     pub ignore_devel_builder: GlobSetBuilder,
     pub assume_installed: Vec<String>,
 
+    pub edit_menu: bool,
+    pub editor: Option<String>,
+    pub editor_flags: Vec<String>,
+
     #[default(PkgbuildRepos::new(aur_fetch::Fetch::with_cache_dir("repo")))]
     pub pkgbuild_repos: PkgbuildRepos,
 }
@@ -1025,6 +1029,9 @@ then initialise it with:
             "ChrootFlags" => self.chroot_flags.extend(split),
             "PreBuildCommand" => self.pre_build_command = Some(value),
             "PostBuildCommand" => self.post_build_command = Some(value),
+            "Editor" => self.editor = Some(value),
+            "EditorFlags" => self.editor_flags.extend(split),
+            "EditMenu" => self.edit_menu = true,
             _ => eprintln!(
                 "{}",
                 tr!("error: unknown option '{}' in section [bin]", key)
@@ -1137,6 +1144,11 @@ then initialise it with:
                     self.mode |= word.parse()?;
                 }
             }
+            "Editor" => self.editor = Some(value?),
+            "EditorFlags" => self
+                .editor_flags
+                .extend(value?.split_whitespace().map(|s| s.to_string())),
+            "EditMenu" => self.edit_menu = true,
             _ => ok2 = false,
         };
 
