@@ -607,6 +607,9 @@ impl Installer {
 
         self.add_pkg(config, base, repo, &pkgdests, &debug_paths)?;
         self.queue_install(base, &pkgdests, &debug_paths);
+
+        post_build_command(config, dir, base.package_base(), &version)?;
+
         Ok((pkgdests, version))
     }
 
@@ -1260,7 +1263,6 @@ fn print_warnings(config: &Config, cache: &Cache, actions: Option<&Actions>) {
     if !config.mode.aur() && !config.mode.pkgbuild() {
         return;
     }
-
     if config.args.has_arg("u", "sysupgrade") && config.mode.aur() {
         let (_, mut pkgs) = repo_aur_pkgs(config);
         pkgs.retain(|pkg| config.pkgbuild_repos.pkg(config, pkg.name()).is_none());
@@ -1547,6 +1549,19 @@ fn set_install_reason<S: AsRef<str>>(config: &Config, reason: &str, pkgs: &[S]) 
 
 fn pre_build_command(config: &Config, dir: &Path, base: &str, version: &str) -> Result<()> {
     if let Some(ref pb_cmd) = config.pre_build_command {
+        let mut cmd = Command::new("sh");
+        cmd.env("PKGBASE", base)
+            .env("VERSION", version)
+            .current_dir(dir)
+            .arg("-c")
+            .arg(pb_cmd);
+        exec::command(&mut cmd)?;
+    }
+    Ok(())
+}
+
+fn post_build_command(config: &Config, dir: &Path, base: &str, version: &str) -> Result<()> {
+    if let Some(ref pb_cmd) = config.post_build_command {
         let mut cmd = Command::new("sh");
         cmd.env("PKGBASE", base)
             .env("VERSION", version)

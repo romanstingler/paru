@@ -366,6 +366,12 @@ impl Config {
             }
             Arg::Long("nosign") => self.sign = Sign::No,
             Arg::Long("nosigndb") => self.sign_db = Sign::No,
+            Arg::Long("post-build-command") => match value {
+                Ok(v) => {
+                    self.post_build_command = Some(v.to_string());
+                }
+                Err(_) => bail!(tr!("argument --post-build-command requires a value")),
+            },
             Arg::Long(a) if !arg.is_pacman_arg() && !arg.is_pacman_global() => {
                 bail!(tr!("unknown option --{}", a))
             }
@@ -448,6 +454,7 @@ fn takes_value(arg: Arg) -> TakesValue {
         Arg::Long("sign") => TakesValue::Optional,
         Arg::Long("signdb") => TakesValue::Optional,
         Arg::Long("mode") => TakesValue::Required,
+        Arg::Long("post-build-command") => TakesValue::Required,
         _ => TakesValue::No,
     }
 }
